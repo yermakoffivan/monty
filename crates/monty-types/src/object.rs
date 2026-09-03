@@ -24,7 +24,7 @@ use crate::{
 
 /// An owned Python value exchanged between Monty and its host.
 ///
-/// Construct `MontyObject` values to provide globals, external-function
+/// Construct [`MontyObject`] values to provide globals, external-function
 /// results, and other inputs to sandboxed code. Execution results and values
 /// passed to host callbacks use the same representation.
 ///
@@ -35,7 +35,7 @@ use crate::{
 /// can be used both to raise an exception and to represent one returned by
 /// execution.
 ///
-/// Collections are owned snapshots: modifying a returned `MontyObject` does
+/// Collections are owned snapshots: modifying a returned [`MontyObject`] does
 /// not modify the corresponding value in a running session.
 ///
 /// # Hashability
@@ -180,7 +180,7 @@ impl fmt::Display for MontyObject {
 }
 
 impl MontyObject {
-    /// Creates a new `MontyObject` from something that can be converted into a `DictPairs`.
+    /// Creates a new [`MontyObject`] from something that can be converted into a [`DictPairs`].
     pub fn dict(dict: impl Into<DictPairs>) -> Self {
         Self::Dict(dict.into())
     }
@@ -211,7 +211,7 @@ impl MontyObject {
     /// Shallow host footprint of a freshly decoded `obj`: the fixed [`MontyObject`]
     /// size plus any leaf payload it owns *directly* (string/bytes/bigint bytes, and
     /// the `Vec<String>` field names of structured values, which aren't themselves
-    /// `MontyObject`s and would otherwise be uncharged). Container elements are
+    /// [`MontyObject`]s and would otherwise be uncharged). Container elements are
     /// excluded — each charges its own size via `monty-proto`'s `decode_field`, so a list charges
     /// 88 bytes here.
     pub fn host_size(&self) -> usize {
@@ -535,7 +535,7 @@ impl MontyObject {
     /// - Zero numeric values (`0`, `0.0`)
     /// - Empty sequences and collections (`""`, `b""`, `[]`, `()`, `{}`)
     ///
-    /// All other values are truthy, including `Exception` and `Repr` variants.
+    /// All other values are truthy, including [`Exception`](MontyObject::Exception) and [`Repr`](MontyObject::Repr) variants.
     #[must_use]
     pub fn is_truthy(&self) -> bool {
         match self {
@@ -770,11 +770,11 @@ impl AsRef<Self> for MontyObject {
 ///
 /// Where the runtime `Type::Instance` carries a transient heap id, the public
 /// [`MontyType::Instance`] carries the *resolved class name* as an owned
-/// `String`, so a `MontyType` is always self-contained: it can be serialized,
+/// `String`, so a [`MontyType`] is always self-contained: it can be serialized,
 /// sent over the subprocess wire protocol, and displayed without heap access.
 ///
 /// `Instance` is output-only: a class binding cannot be reconstructed from a
-/// name, so passing `MontyType::Instance` as an *input* is rejected with an
+/// name, so passing [`MontyType::Instance`] as an *input* is rejected with an
 /// [`InvalidInputError`] (see [`MontyObject`] input conversion).
 #[derive(
     Debug,
@@ -948,7 +948,7 @@ impl MontyType {
     }
 
     /// Parses a name produced by [`Display`](fmt::Display)/[`name`](Self::name)
-    /// back to the `MontyType` — the wire-protocol decode path for builtin
+    /// back to the [`MontyType`] — the wire-protocol decode path for builtin
     /// type names. Never yields [`Instance`](Self::Instance): class names
     /// return `None` (the wire carries instance types in a dedicated field
     /// instead), and `"object"` parses to the builtin [`Object`](Self::Object).
@@ -957,7 +957,7 @@ impl MontyType {
     /// `IntoStaticStr` renders with, so the two stay in lockstep by
     /// construction. Exception types display as their exception name
     /// ("ValueError", "json.JSONDecodeError", ...) — fall back to the
-    /// `ExcType` parser.
+    /// [`ExcType`](crate::ExcType) parser.
     #[must_use]
     pub fn from_type_name(name: &str) -> Option<Self> {
         name.parse::<Self>()
@@ -1165,20 +1165,20 @@ impl Hash for MontyTimeZone {
     }
 }
 
-/// Error returned when a `MontyObject` cannot be converted to the requested Rust type.
+/// Error returned when a [`MontyObject`] cannot be converted to the requested Rust type.
 ///
 /// This error is returned by the `TryFrom` implementations when attempting to extract
-/// a specific type from a `MontyObject` that holds a different variant.
+/// a specific type from a [`MontyObject`] that holds a different variant.
 #[derive(Debug)]
 pub struct ConversionError {
     /// The type name that was expected (e.g., "int", "str").
     pub expected: &'static str,
-    /// The actual type name of the `MontyObject` (e.g., "list", "NoneType").
+    /// The actual type name of the [`MontyObject`] (e.g., "list", "NoneType").
     pub actual: &'static str,
 }
 
 impl ConversionError {
-    /// Creates a new `ConversionError` with the expected and actual type names.
+    /// Creates a new [`ConversionError`] with the expected and actual type names.
     #[must_use]
     pub fn new(expected: &'static str, actual: &'static str) -> Self {
         Self { expected, actual }
@@ -1193,10 +1193,10 @@ impl fmt::Display for ConversionError {
 
 impl Error for ConversionError {}
 
-/// Error returned when a `MontyObject` cannot be used as an input to code execution.
+/// Error returned when a [`MontyObject`] cannot be used as an input to code execution.
 ///
 /// This can occur when:
-/// - A `MontyObject` variant (like `Repr`) is only valid as an output, not an input
+/// - A [`MontyObject`] variant (like [`Repr`](MontyObject::Repr)) is only valid as an output, not an input
 /// - A resource limit is exceeded during conversion
 #[derive(Debug, Clone)]
 pub enum InvalidInputError {
@@ -1208,7 +1208,7 @@ pub enum InvalidInputError {
 }
 
 impl InvalidInputError {
-    /// Creates a new `InvalidInputError` for the given type name.
+    /// Creates a new [`InvalidInputError`] for the given type name.
     #[must_use]
     pub fn invalid_type(msg: impl Into<Cow<'static, str>>) -> Self {
         Self::InvalidType(msg.into())
@@ -1274,7 +1274,7 @@ impl TryFrom<&MontyObject> for String {
     }
 }
 
-/// Attempts to convert a `MontyObject` to a bool.
+/// Attempts to convert a [`MontyObject`] to a bool.
 /// Returns an error if the object is not a True or False variant.
 /// Note: This does NOT use Python's truthiness rules (use MontyObject::bool for that).
 impl TryFrom<&MontyObject> for bool {
@@ -1290,8 +1290,8 @@ impl TryFrom<&MontyObject> for bool {
 
 /// A collection of key-value pairs representing Python dictionary contents.
 ///
-/// Used internally by `MontyObject::Dict` to store dictionary entries while preserving
-/// insertion order. Keys and values are both `MontyObject` instances.
+/// Used internally by [`MontyObject::Dict`] to store dictionary entries while preserving
+/// insertion order. Keys and values are both [`MontyObject`] instances.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct DictPairs(Vec<(MontyObject, MontyObject)>);
 

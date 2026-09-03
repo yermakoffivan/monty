@@ -44,7 +44,7 @@ pub enum RunProgress {
 }
 
 impl RunProgress {
-    /// Consumes the progress and returns the `FunctionCall` struct if this is a function call.
+    /// Consumes the progress and returns the [`FunctionCall`] struct if this is a function call.
     #[must_use]
     pub fn into_function_call(self) -> Option<FunctionCall> {
         match self {
@@ -53,7 +53,7 @@ impl RunProgress {
         }
     }
 
-    /// Consumes the progress and returns the `OsCall` struct if this is an OS call.
+    /// Consumes the progress and returns the [`OsCall`] struct if this is an OS call.
     #[must_use]
     pub fn into_os_call(self) -> Option<OsCall> {
         match self {
@@ -71,7 +71,7 @@ impl RunProgress {
         }
     }
 
-    /// Consumes the progress and returns the `ResolveFutures` struct.
+    /// Consumes the progress and returns the [`ResolveFutures`] struct.
     #[must_use]
     pub fn into_resolve_futures(self) -> Option<ResolveFutures> {
         match self {
@@ -80,7 +80,7 @@ impl RunProgress {
         }
     }
 
-    /// Consumes the progress and returns the `NameLookup` struct.
+    /// Consumes the progress and returns the [`NameLookup`] struct.
     #[must_use]
     pub fn into_name_lookup(self) -> Option<NameLookup> {
         match self {
@@ -97,11 +97,11 @@ impl RunProgress {
 /// Execution paused at an external function call or dataclass method call.
 ///
 /// The host can choose how to handle this:
-/// - **Sync resolution**: Call `resume(return_value, print)` to push the result and continue.
-/// - **Async resolution**: Call `resume_pending(print)` to push an `ExternalFuture` and continue.
+/// - **Sync resolution**: Call [`resume`](Self::resume) to push the result and continue.
+/// - **Async resolution**: Call [`resume_pending`](Self::resume_pending) to push an `ExternalFuture` and continue.
 ///
 /// When using async resolution, the code continues and may `await` the future later.
-/// If the future isn't resolved when awaited, execution yields with `ResolveFutures`.
+/// If the future isn't resolved when awaited, execution yields with [`ResolveFutures`].
 ///
 /// When `method_call` is true, this represents a dataclass method call where the first
 /// positional arg is the dataclass instance (`self`).
@@ -175,7 +175,7 @@ impl FunctionCall {
     /// This is the async resolution pattern: the host continues execution with a
     /// pending future. The code can then `await` this future later. If the code
     /// awaits the future before it's resolved, execution will yield with
-    /// `RunProgress::ResolveFutures`.
+    /// [`RunProgress::ResolveFutures`].
     ///
     /// Uses `self.call_id` internally — no need to pass it again.
     ///
@@ -263,8 +263,8 @@ impl OsCall {
 /// Execution paused for an unresolved name lookup.
 ///
 /// The host should check if the name corresponds to a known external function or
-/// value. Call `resume(result, print)` with `NameLookupResult::Value(obj)` to
-/// cache it in the namespace and continue, or `NameLookupResult::Undefined` to
+/// value. Call [`resume`](Self::resume) with [`NameLookupResult::Value`] to
+/// cache it in the namespace and continue, or [`NameLookupResult::Undefined`] to
 /// raise `NameError`.
 ///
 /// The namespace slot and scope are managed internally — the host only needs to
@@ -304,7 +304,7 @@ impl NameLookup {
     /// before restoring the VM, then either pushes the value or raises `NameError`.
     ///
     /// # Arguments
-    /// * `result` — The resolved value or `Undefined`.
+    /// * `result` — The resolved value or [`Undefined`](NameLookupResult::Undefined).
     /// * `print` — Writer for print output.
     pub fn resume(
         self,
@@ -380,8 +380,8 @@ impl NameLookup {
 /// Supports incremental resolution — you can provide partial results and Monty
 /// will continue running until all tasks are blocked again.
 ///
-/// Use `pending_call_ids()` to see which calls are pending, then call
-/// `resume(results, print)` with some or all of the results.
+/// Use [`pending_call_ids`](Self::pending_call_ids) to see which calls are pending, then call
+/// [`resume`](Self::resume) with some or all of the results.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ResolveFutures {
     /// The executor containing compiled code and interns.
@@ -469,14 +469,14 @@ impl ResolveFutures {
     /// 1. Mark those futures as resolved
     /// 2. Unblock any tasks waiting on those futures
     /// 3. Continue running until all tasks are blocked again
-    /// 4. Return `ResolveFutures` with the remaining pending calls
+    /// 4. Return [`ResolveFutures`] with the remaining pending calls
     ///
     /// # Arguments
     /// * `results` — List of `(call_id, result)` pairs. Can be a subset of pending calls.
     /// * `print` — Writer for print output.
     ///
     /// # Errors
-    /// Returns `Err(MontyException)` if any `call_id` in `results` is not in the pending set.
+    /// Returns [`MontyException`] if any `call_id` in `results` is not in the pending set.
     pub fn resume(
         self,
         results: Vec<(u32, ExtFunctionResult)>,
